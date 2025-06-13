@@ -1,0 +1,231 @@
+/* --- GERAL E VARIÁVEIS --- */
+:root {
+    --cor-fundo: #121212;
+    --cor-fundo-secundario: #1E1E1E;
+    --cor-fundo-card: #2A2A2A;
+    --cor-borda: #444;
+    --cor-texto-primario: #E0E0E0;
+    --cor-texto-secundario: #B0B0B0;
+    --cor-destaque: #3399FF;
+    --cor-destaque-hover: #55B4FF;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--cor-fundo);
+    color: var(--cor-texto-primario);
+    line-height: 1.6;
+}
+
+/* --- PÁGINA INICIAL (MENU EXTERNO) --- */
+.main-header {
+    text-align: center;
+    padding: 4rem 1rem 2rem;
+}
+
+.main-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.main-header p {
+    font-size: 1.1rem;
+    color: var(--cor-texto-secundario);
+}
+
+.course-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.course-card {
+    background-color: var(--cor-fundo-card);
+    border: 1px solid var(--cor-borda);
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--cor-texto-primario);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    display: flex;
+    min-height: 180px;
+}
+
+.course-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+    border-color: var(--cor-destaque-hover);
+}
+
+.course-card.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.course-card.disabled:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: var(--cor-borda);
+}
+
+.card-content {
+    padding: 1.5rem;
+}
+
+.card-content h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+    color: var(--cor-destaque);
+}
+
+.card-content p {
+    color: var(--cor-texto-secundario);
+    font-size: 1rem;
+}
+
+footer {
+    text-align: center;
+    padding: 2rem;
+    margin-top: 2rem;
+    color: #777;
+    font-size: 0.9rem;
+}
+
+/* --- PÁGINA INTERNA (MENU E CONTEÚDO) --- */
+.course-layout {
+    display: flex;
+    height: 100vh;
+}
+
+.sidebar {
+    width: 280px;
+    background-color: var(--cor-fundo-secundario);
+    padding: 1.5rem;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow-y: auto;
+    border-right: 1px solid var(--cor-borda);
+}
+
+.sidebar-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--cor-borda);
+}
+
+.sidebar-header h2 {
+    font-size: 1.4rem;
+    color: var(--cor-destaque);
+}
+
+.sidebar-nav ul {
+    list-style: none;
+}
+
+.sidebar-nav li {
+    margin-bottom: 0.5rem;
+}
+
+.sidebar-nav a {
+    color: var(--cor-texto-secundario);
+    text-decoration: none;
+    display: block;
+    padding: 0.75rem 1rem;
+    border-radius: 5px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.sidebar-nav a:hover, .sidebar-nav a.active {
+    background-color: var(--cor-fundo-card);
+    color: var(--cor-texto-primario);
+}
+
+.content-area {
+    margin-left: 280px; /* Mesma largura da sidebar */
+    flex-grow: 1;
+    padding: 3rem 4rem;
+    overflow-y: auto;
+    height: 100vh;
+}
+
+/* Estilos para o conteúdo gerado pelo Gemini */
+#topic-content h1 {
+    font-size: 2.8rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid var(--cor-borda);
+    padding-bottom: 1rem;
+}
+
+#topic-content h2 {
+    font-size: 2rem;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--cor-borda);
+    padding-bottom: 0.5rem;
+}
+
+#topic-content h3 {
+    font-size: 1.5rem;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+
+#topic-content p {
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+#topic-content ul, #topic-content ol {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+#topic-content li {
+    margin-bottom: 0.5rem;
+}
+
+#topic-content pre {
+    background-color: #0d1117; /* Cor do GitHub */
+    color: #c9d1d9;
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.95rem;
+}
+
+#topic-content code {
+    font-family: 'Courier New', Courier, monospace;
+    background-color: var(--cor-fundo-card);
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+#topic-content a {
+    color: var(--cor-destaque);
+    text-decoration: none;
+}
+
+#topic-content a:hover {
+    text-decoration: underline;
+}
+
+#topic-content blockquote {
+    border-left: 4px solid var(--cor-destaque);
+    padding-left: 1rem;
+    margin: 1.5rem 0;
+    color: var(--cor-texto-secundario);
+    font-style: italic;
+}
