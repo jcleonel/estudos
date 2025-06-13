@@ -1,74 +1,230 @@
-<h1>Explorador de Injeção de Dependências</h1>
-<p>Uma análise aprofundada sobre os pontos de injeção e o uso da anotação <code>@Autowired</code> no Spring Framework.</p>
+&lt;h1>Anotações de Estudo: Especialista Spring REST&lt;/h1>
+&lt;p>Este material foi gerado para servir como um guia de referência detalhado sobre os conceitos fundamentais de APIs REST, seus componentes, arquitetura e aplicação prática no desenvolvimento de software moderno.&lt;/p>
+&lt;hr>
+&lt;h2>1 - o que é uma API?&lt;58></h2>
+&lt;p>
+&lt;strong>API&lt;/strong> é a sigla para &lt;strong>Application Programming Interface&lt;/strong>, ou em português, &lt;strong>Interface de Programação de Aplicações&lt;/strong>. De forma ampla, uma API é um conjunto de regras, padrões e ferramentas que permite que diferentes sistemas de software se comuniquem e interajam entre si. Ela atua como um contrato ou um intermediário que define como um software pode solicitar serviços ou dados de outro.
+&lt;/p>
+&lt;p>
+Pense em uma API como um garçom em um restaurante. Você (um sistema, o cliente) não vai até a cozinha (outro sistema, o servidor) para preparar sua comida. Em vez disso, você olha o cardápio (a documentação da API), faz um pedido ao garçom (a chamada à API) com base nas opções disponíveis. O garçom leva seu pedido para a cozinha, que o prepara. Quando pronto, o garçom traz o prato até você. Você não precisa saber como a cozinha funciona, quais são os ingredientes exatos ou os passos da receita. Você só precisa saber como fazer o pedido e o que esperar como resultado.
+&lt;/p>
+&lt;blockquote>
+&lt;strong>Analogia: O Contrato de Serviços&lt;/strong>&lt;br>
+Uma API é como um contrato formal que estipula: "Se você me enviar uma requisição formatada desta maneira específica, eu me comprometo a executar esta ação ou a te fornecer este dado específico, também em um formato pré-definido."
+&lt;/blockquote>
+&lt;p>
+É crucial entender que APIs não são exclusivas da web. Elas existem em diversos contextos:
+&lt;/p>
+&lt;ul>
+&lt;li>
+&lt;strong>APIs de Sistemas Operacionais:&lt;/strong> Permitem que aplicativos (como o Word ou o Chrome) interajam com o sistema operacional para realizar ações como salvar um arquivo, abrir uma janela ou acessar a área de transferência. O Windows API e o POSIX (para sistemas Unix-like) são exemplos.
+&lt;/li>
+&lt;li>
+&lt;strong>APIs de Bibliotecas/Frameworks:&lt;/strong> Quando você, como programador Java, utiliza uma classe como &lt;code>ArrayList&lt;/code>, você está usando a API da biblioteca padrão do Java. Os métodos &lt;code>.add()&lt;/code>, &lt;code>.get()&lt;/code>, &lt;code>.remove()&lt;/code> são os pontos de entrada dessa API, que te permitem manipular uma lista sem precisar implementar a estrutura de dados do zero. O Spring Framework é, em sua essência, um conjunto massivo de APIs que facilitam o desenvolvimento.
+&lt;/li>
+&lt;li>
+&lt;strong>Web APIs:&lt;/strong> Este é o foco principal do seu estudo. São APIs que expõem funcionalidades através da internet, geralmente utilizando o protocolo HTTP. Elas permitem a comunicação entre um cliente (como um navegador, um aplicativo móvel ou outro servidor) e um servidor remoto. Exemplos incluem a API do Google Maps, que permite exibir mapas em seu site, ou a API do Twitter, que permite postar tweets programaticamente.
+&lt;/li>
+&lt;/ul>
+&lt;hr>
+&lt;h2>2 - No contexto de API, o que é um Consumidor e um Provedor?&lt;/h2>
+&lt;p>
+Os termos &lt;strong>Consumidor (Consumer)&lt;/strong> e &lt;strong>Provedor (Provider)&lt;/strong> definem os dois lados de uma interação via API. Eles são análogos aos papéis de cliente e servidor na arquitetura cliente-servidor.
+&lt;/p>
+&lt;ul>
+&lt;li>
+&lt;strong>Provedor (Provider):&lt;/strong> É o sistema ou aplicação que &lt;strong>expõe a API&lt;/strong>. Ele é o dono dos dados e da lógica de negócio. É ele quem "provê" os serviços e as informações. O provedor define o contrato da API (os endpoints, os formatos de dados, as regras) e é responsável por processar as requisições e enviar as respostas. No seu caso, a aplicação Spring REST que você irá construir é o Provedor.
+&lt;/li>
+&lt;li>
+&lt;strong>Consumidor (Consumer):&lt;/strong> É o sistema ou aplicação que &lt;strong>utiliza a API&lt;/strong>. Ele "consome" os serviços e os dados disponibilizados pelo Provedor. O consumidor precisa conhecer o contrato da API para saber como formatar suas requisições e como tratar as respostas recebidas. Um aplicativo de celular que busca dados de um backend, um site (frontend) que precisa de informações para exibir na tela, ou até mesmo outro backend em uma arquitetura de microsserviços são exemplos de Consumidores.
+&lt;/li>
+&lt;/ul>
+&lt;blockquote>
+&lt;strong>Analogia do Restaurante (Expandida):&lt;/strong>&lt;br>
+&lt;ul>
+&lt;li>&lt;strong>O Cliente no restaurante:&lt;/strong> É o &lt;em>Consumidor&lt;/em>. Ele precisa dos serviços (comida).&lt;/li>
+&lt;li>&lt;strong>A Cozinha:&lt;/strong> É o &lt;em>Provedor&lt;/em>. Ela possui os recursos e a capacidade de executar o serviço (preparar a comida).&lt;/li>
+&lt;li>&lt;strong>O Cardápio e o Garçom (A API):&lt;/strong> São a interface que permite a comunicação padronizada entre o Consumidor e o Provedor.&lt;/li>
+&lt;/ul>
+&lt;/blockquote>
+&lt;hr>
+&lt;h2>3 - O que é uma Web Service? É uma API? Faça um comparativo detalhado entre Web Service e API, destacando as diferenças e semelhanças.&lt;/h2>
+&lt;p>
+Sim, &lt;strong>todo Web Service é uma API, mas nem toda API é um Web Service&lt;/strong>. Essa é a distinção mais importante. Um Web Service é um tipo específico de API com um conjunto de regras mais estrito.
+&lt;/p>
+&lt;p>
+O termo &lt;strong>Web Service&lt;/strong> historicamente se refere a um método de comunicação máquina-a-máquina através de uma rede, que segue padrões bem definidos como SOAP, WSDL e UDDI.
+&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>SOAP (Simple Object Access Protocol):&lt;/strong> Um protocolo baseado em XML para troca de mensagens estruturadas. É conhecido por ser robusto e seguro, mas também mais verboso e complexo.&lt;/li>
+&lt;li>&lt;strong>WSDL (Web Services Description Language):&lt;/strong> Uma linguagem baseada em XML usada para descrever as funcionalidades do Web Service. É o "manual de instruções" extremamente detalhado da API.&lt;/li>
+&lt;/ul>
+&lt;p>
+Uma &lt;strong>API&lt;/strong>, no contexto web moderno, é um termo mais amplo. Embora possa usar SOAP, hoje em dia o termo "Web API" é quase sinônimo de uma API que usa o estilo arquitetural &lt;strong>REST&lt;/strong>, que é mais simples e flexível.
+&lt;/p>
+&lt;p>&lt;strong>Comparativo Detalhado: Web Service (SOAP) vs. API Web (REST)&lt;/strong>&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>Característica&lt;/th>
+&lt;th>Web Service (SOAP)&lt;/th>
+&lt;th>API Web (REST)&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>&lt;strong>Definição&lt;/strong>&lt;/td>
+&lt;td>Um tipo específico de API com padrões rígidos (SOAP, WSDL).&lt;/td>
+&lt;td>Um termo amplo para qualquer interface de programação na web. REST é o estilo mais comum.&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>&lt;strong>Protocolo de Comunicação&lt;/strong>&lt;/td>
+&lt;td>Principalmente SOAP. Pode operar sobre HTTP, mas também sobre outros protocolos como SMTP, TCP.&lt;/td>
+&lt;td>Quase exclusivamente HTTP/HTTPS. A comunicação é o próprio protocolo web.&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>&lt;strong>Formato dos Dados&lt;/strong>&lt;/td>
+&lt;td>Estritamente XML.&lt;/td>
+&lt;td>Flexível. JSON é o mais comum, mas pode usar XML, texto puro, HTML, etc.&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>&lt;strong>Estilo Arquitetural&lt;/strong>&lt;/td>
+&lt;td>É um protocolo em si, mais orientado a serviços e ações (verbos nos envelopes SOAP).&lt;/td>
+&lt;td>Segue o estilo arquitetural REST, orientado a recursos e utilizando os verbos do próprio HTTP (GET, POST, PUT, DELETE).&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>&lt;strong>Performance e "Peso"&lt;/strong>&lt;/td>
+&lt;td>Mais pesado e verboso devido ao XML e ao envelope SOAP. Requer mais processamento e largura de banda.&lt;/td>
+&lt;td>Mais leve e performático, especialmente com JSON. Ideal para dispositivos móveis e SPAs.&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>&lt;strong>Segurança&lt;/strong>&lt;/td>
+&lt;td>Possui padrões de segurança robustos e bem definidos (WS-Security), geralmente considerados mais fortes para integrações corporativas.&lt;/td>
+&lt;td>Utiliza os padrões do próprio protocolo HTTP/HTTPS, como TLS, e esquemas de autenticação como OAuth 2.0 e JWT (JSON Web Tokens).&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>&lt;strong>Estado&lt;/strong>&lt;/td>
+&lt;td>Pode ser stateful ou stateless.&lt;/td>
+&lt;td>É fundamentalmente &lt;strong>stateless&lt;/strong> (sem estado). Cada requisição contém toda a informação necessária para ser processada.&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2>4 - O que é REST? Qual o protocolo fundamental que ele utiliza e por que ele é tão crucial para RESTful APIs?&lt;/h2>
+&lt;p>
+&lt;strong>REST&lt;/strong> significa &lt;strong>Representational State Transfer&lt;/strong> (Transferência de Estado Representacional). Não é um protocolo nem um padrão, mas sim um &lt;strong>estilo de arquitetura de software&lt;/strong> para sistemas distribuídos, como a World Wide Web. Foi definido por Roy Fielding em sua tese de doutorado em 2000 (o mesmo cientista que foi um dos principais arquitetos do protocolo HTTP).
+&lt;/p>
+&lt;p>
+REST define um conjunto de restrições ou princípios que, quando aplicados, resultam em sistemas mais escaláveis, flexíveis e fáceis de manter. Uma API que segue esses princípios é chamada de &lt;strong>RESTful&lt;/strong>.
+&lt;/p>
+&lt;p>As 6 restrições arquiteturais do REST são:&lt;/p>
+&lt;ol>
+&lt;li>&lt;strong>Arquitetura Cliente-Servidor:&lt;/strong> Separação clara entre a interface do usuário (cliente) e o armazenamento de dados (servidor). Isso permite que evoluam de forma independente.&lt;/li>
+&lt;li>&lt;strong>Stateless (Sem Estado):&lt;/strong> Cada requisição do cliente para o servidor deve conter toda a informação que o servidor precisa para entender e processar a requisição. O servidor não armazena nenhum contexto do cliente entre as requisições. Isso melhora a escalabilidade, pois qualquer servidor pode atender a qualquer requisição.&lt;/li>
+&lt;li>&lt;strong>Cacheable (Cacheável):&lt;/strong> As respostas devem, implicitamente ou explicitamente, se definir como cacheáveis ou não. Isso permite que o cliente reutilize dados de respostas anteriores, melhorando a performance e a eficiência da rede.&lt;/li>
+&lt;li>&lt;strong>Interface Uniforme:&lt;/strong> Esta é uma restrição chave que simplifica e desacopla a arquitetura. Ela se divide em quatro sub-restrições:
+&lt;ul>
+&lt;li>&lt;strong>Identificação de recursos (URIs):&lt;/strong> Tudo é um recurso (um cliente, um produto, um pedido) e cada recurso é unicamente identificado por um URI (Uniform Resource Identifier), como &lt;code>/clientes/123&lt;/code>.&lt;/li>
+&lt;li>&lt;strong>Manipulação de recursos através de representações:&lt;/strong> O cliente interage com uma representação do recurso (um documento JSON ou XML), e não com o recurso em si no servidor.&lt;/li>
+&lt;li>&lt;strong>Mensagens autodescritivas:&lt;/strong> Cada mensagem (requisição/resposta) contém informação suficiente para descrever como processá-la (e.g., o &lt;code>Content-Type: application/json&lt;/code> indica que o corpo é um JSON).&lt;/li>
+&lt;li>&lt;strong>HATEOAS (Hypermedia as the Engine of Application State):&lt;/strong> As respostas do servidor devem conter links (hipermídia) que guiam o cliente sobre as próximas ações possíveis. Ex: uma resposta de um pedido pode conter o link para cancelá-lo ou para ver seus detalhes.&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>Sistema em Camadas (Layered System):&lt;/strong> O cliente não sabe se está conectado diretamente ao servidor final ou a um intermediário (como um load balancer, um cache ou um gateway). Isso permite que a arquitetura do sistema evolua com a adição de camadas de segurança, balanceamento de carga, etc.&lt;/li>
+&lt;li>&lt;strong>Código sob Demanda (Opcional):&lt;/strong> O servidor pode estender temporariamente a funcionalidade do cliente transferindo código executável, como scripts (e.g., JavaScript).&lt;/li>
+&lt;/ol>
+&lt;p>&lt;strong>O Protocolo Fundamental: HTTP&lt;/strong>&lt;/p>
+&lt;p>
+O protocolo fundamental que o REST utiliza é o &lt;strong>HTTP (Hypertext Transfer Protocol)&lt;/strong>. O HTTP não foi criado para o REST, mas o REST foi criado para modelar o comportamento da própria Web, que roda sobre HTTP. Por isso, eles se encaixam perfeitamente.
+&lt;/p>
+&lt;p>
+O HTTP é crucial porque sua semântica já fornece as ferramentas para aplicar a maioria dos princípios REST:
+&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>URIs para identificar recursos:&lt;/strong> A própria web funciona com URLs/URIs. REST usa isso para apontar para recursos (&lt;code>/produtos/42&lt;/code>).&lt;/li>
+&lt;li>&lt;strong>Verbos HTTP para ações:&lt;/strong> O HTTP define um conjunto de métodos (verbos) que mapeiam diretamente para as operações de CRUD (Create, Read, Update, Delete) sobre os recursos.
+&lt;ul>
+&lt;li>&lt;code>GET&lt;/code>: Para ler/recuperar um recurso. (Read)&lt;/li>
+&lt;li>&lt;code>POST&lt;/code>: Para criar um novo recurso. (Create)&lt;/li>
+&lt;li>&lt;code>PUT&lt;/code>: Para atualizar um recurso existente (substituindo-o por completo). (Update)&lt;/li>
+&lt;li>&lt;code>DELETE&lt;/code>: Para remover um recurso. (Delete)&lt;/li>
+&lt;li>&lt;code>PATCH&lt;/code>: Para atualizar parcialmente um recurso. (Update parcial)&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>Códigos de Status (Status Codes):&lt;/strong> O HTTP fornece um conjunto padrão de códigos de resposta para indicar o resultado de uma requisição de forma padronizada (e.g., &lt;code>200 OK&lt;/code>, &lt;code>201 Created&lt;/code>, &lt;code>404 Not Found&lt;/code>, &lt;code>500 Internal Server Error&lt;/code>).&lt;/li>
+&lt;li>&lt;strong>Cabeçalhos (Headers):&lt;/strong> Para enviar metadados, como o formato do conteúdo (&lt;code>Content-Type&lt;/code>), informações de cache (&lt;code>Cache-Control&lt;/code>) e autenticação (&lt;code>Authorization&lt;/code>).&lt;/li>
+&lt;/ul>
+&lt;hr>
+&lt;h2>5 - Por que desenvolver REST APIs? Liste os principais benefícios e casos de uso.&lt;/h2>
+&lt;p>&lt;strong>Principais Benefícios&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>
+&lt;strong>Simplicidade e Facilidade de Uso:&lt;/strong> Por usar padrões HTTP, que são universalmente conhecidos e bem documentados, as APIs REST são mais fáceis de aprender, construir e consumir do que alternativas como SOAP.
+&lt;/li>
+&lt;li>
+&lt;strong>Flexibilidade e Desacoplamento:&lt;/strong> A separação estrita entre cliente e servidor permite que eles evoluam de forma independente. Você pode mudar toda a sua tecnologia de frontend sem tocar no backend, desde que o contrato da API seja mantido.
+&lt;/li>
+&lt;li>
+&lt;strong>Escalabilidade:&lt;/strong> A restrição &lt;em>stateless&lt;/em> é um fator chave para a escalabilidade. Como nenhuma informação da sessão do cliente é mantida no servidor, é fácil distribuir as requisições entre múltiplos servidores (balanceamento de carga) e escalar a aplicação horizontalmente.
+&lt;/li>
+&lt;li>
+&lt;strong>Performance:&lt;/strong> O uso de caches, a leveza de formatos como JSON e a arquitetura sem estado contribuem para uma comunicação mais rápida e eficiente, especialmente em redes com latência como a internet móvel.
+&lt;/li>
+&lt;li>
+&lt;strong>Independência de Tecnologia:&lt;/strong> Como a comunicação é baseada em padrões abertos (HTTP, JSON), o cliente e o servidor podem ser escritos em linguagens e tecnologias completamente diferentes (um backend em Java/Spring se comunicando com um app móvel em Swift/Kotlin e um site em React/Angular).
+&lt;/li>
+&lt;/ul>
+&lt;p>&lt;strong>Principais Casos de Uso&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>
+&lt;strong>Aplicações Web Modernas (SPAs - Single Page Applications):&lt;/strong> Frameworks como React, Angular e Vue.js constroem interfaces de usuário ricas que rodam no navegador. Essas aplicações se comportam como programas desktop e consomem dados do servidor através de chamadas a APIs REST, sem a necessidade de recarregar a página a cada interação.
+&lt;/li>
+&lt;li>
+&lt;strong>Aplicações Móveis (Mobile Apps):&lt;/strong> Praticamente todos os aplicativos de celular que precisam de conexão com a internet (redes sociais, e-commerce, bancos) utilizam APIs REST para se comunicar com os servidores de backend, enviando e recebendo dados.
+&lt;/li>
+&lt;li>
+&lt;strong>Arquitetura de Microsserviços:&lt;/strong> Em uma arquitetura de microsserviços, a aplicação é quebrada em serviços menores e independentes (serviço de pagamento, serviço de inventário, serviço de usuário). As APIs REST são a "cola" que permite que esses serviços se comuniquem entre si de forma eficiente e padronizada.
+&lt;/li>
+&lt;li>
+&lt;strong>Integração entre Parceiros de Negócio (B2B):&lt;/strong> Empresas expõem APIs REST para permitir que seus parceiros acessem dados ou funcionalidades de forma programática. Por exemplo, um e-commerce pode usar a API de uma transportadora para calcular o frete em tempo real.
+&lt;/li>
+&lt;li>
+&lt;strong>Aplicações IoT (Internet of Things):&lt;/strong> Dispositivos inteligentes (sensores, câmeras, eletrodomésticos) usam APIs REST para enviar dados para uma plataforma central na nuvem e receber comandos.
+&lt;/li>
+&lt;/ul>
+&lt;hr>
+&lt;h2>Exemplo Prático com Java e Spring&lt;/h2>
+&lt;p>
+Criar um Provedor de API REST com Java e Spring Boot é extremamente simples e produtivo, graças às abstrações do framework. Aqui está um exemplo de um "Controller" que expõe um endpoint RESTful.
+&lt;/p>
+&lt;p>
+Este código cria um endpoint &lt;code>GET /api/saudacao&lt;/code>. Quando um Consumidor faz uma requisição para este endereço, o servidor Spring (Provedor) responderá com um JSON como: &lt;code>{"mensagem":"Olá, Jean! Bem-vindo ao mundo das APIs REST com Spring!"}&lt;/code>.
+&lt;/p>
+&lt;pre>&lt;code class="language-java">
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-<hr style="margin: 2rem 0; border-color: var(--cor-borda);">
+import java.util.Map;
+import java.util.Collections;
 
-<h2>Conceitos Fundamentais</h2>
+// @RestController é uma anotação do Spring que combina @Controller e @ResponseBody.
+// Ela marca a classe como um controlador de requisições REST, onde cada método
+// retorna um objeto que será automaticamente serializado para JSON e escrito na resposta.
+@RestController
+@RequestMapping("/api") // Mapeia todas as requisições que começam com /api para este controller.
+public class SaudacaoController {
 
-<h3>1. O que é um Ponto de Injeção?</h3>
-<p>Um <strong>ponto de injeção</strong> é um local específico no código de uma classe onde uma dependência externa é fornecida ou "injetada". Em vez da classe criar ou buscar ativamente suas dependências, o contêiner de Inversão de Controle (IoC) do Spring identifica esses pontos e provê as instâncias necessárias.</p>
-<p>No Spring, os pontos de injeção podem ser:</p>
-<ul>
-    <li><strong>Construtores:</strong> As dependências são declaradas como parâmetros de um construtor da classe.</li>
-    <li><strong>Métodos Setter:</strong> Métodos públicos são usados para injetar a dependência após a instanciação.</li>
-    <li><strong>Campos (Atributos):</strong> A dependência é injetada diretamente em um campo da classe.</li>
-</ul>
-
-<h3>2. O que é e para que serve a anotação @Autowired?</h3>
-<p>A anotação <code>@Autowired</code> no Spring Framework é usada para marcar um ponto de injeção, indicando que uma dependência deve ser automaticamente resolvida e injetada pelo contêiner IoC. Seu principal propósito é <strong>automatizar a injeção de dependências</strong>.</p>
-
-<h3>3. Como o Spring gerencia essas injeções?</h3>
-<p>O gerenciamento é realizado pelo contêiner IoC através de um pós-processamento de beans. O processo segue estas etapas:</p>
-<ol>
-    <li><strong>Varredura e Definição:</strong> O contêiner lê as definições de todos os beans.</li>
-    <li><strong>Instanciação e Inspeção:</strong> Ao instanciar um bean, um processador busca por anotações <code>@Autowired</code>.</li>
-    <li><strong>Resolução de Dependência:</strong> Ele consulta o contêiner para encontrar um bean que corresponda ao tipo.</li>
-    <li><strong>Injeção:</strong> Usa reflexão para injetar a instância no campo ou invocar o método.</li>
-</ol>
-
-<hr style="margin: 2rem 0; border-color: var(--cor-borda);">
-
-<h2>Comparativo das Formas de Injeção</h2>
-
-<h3>Injeção via Construtor (Recomendado)</h3>
-<p>As dependências são declaradas como parâmetros do construtor. É a forma recomendada pelo time do Spring para dependências obrigatórias.</p>
-<pre><code>@Component
-public class MeuServico {
-    private final OutroServico outroServico;
-
-    public MeuServico(OutroServico outroServico) {
-        this.outroServico = outroServico;
-    }
-}</code></pre>
-<ul>
-    <li><strong>Vantagens:</strong> Imutabilidade (campos `final`), estado consistente, alta testabilidade.</li>
-    <li><strong>Desvantagens:</strong> Verbosidade se houver muitas dependências.</li>
-</ul>
-
-<h3>Injeção via Setter</h3>
-<p>As dependências são injetadas através de métodos `setter` públicos. Indicada para dependências opcionais.</p>
-<pre><code>@Component
-public class MeuServico {
-    private OutroServico outroServico;
-
-    @Autowired
-    public void setOutroServico(OutroServico outroServico) {
-        this.outroServico = outroServico;
-    }
-}</code></pre>
-<ul>
-    <li><strong>Vantagens:</strong> Ideal para dependências opcionais com <code>@Autowired(required = false)</code>.</li>
-    <li><strong>Desvantagens:</strong> Mutabilidade, o objeto pode ter um estado incompleto temporariamente.</li>
-</ul>
-
-<h3>Injeção via Atributo (Campo)</h3>
-<p>As dependências são injetadas diretamente nos campos. É a forma mais concisa, mas geralmente desencorajada.</p>
-<pre><code>@Component
-public class MeuServico {
-    @Autowired
-    private OutroServico outroServico;
-}</code></pre>
-<ul>
-    <li><strong>Vantagens:</strong> Muito conciso.</li>
-    <li><strong>Desvantagens:</strong> Baixa testabilidade, viola encapsulamento, esconde as dependências.</li>
-</ul>
+// @GetMapping mapeia requisições HTTP GET para o caminho /api/saudacao.
+// Este método irá manipular essas requisições.
+@GetMapping("/saudacao")
+public Map&lt;String, String&gt; getSaudacao() {
+    // O Spring, com a ajuda da biblioteca Jackson (incluída por padrão),
+    // irá converter este Map Java em um objeto JSON na resposta HTTP.
+    // A resposta terá o status 200 OK por padrão.
+    String mensagem = "Olá, Jean! Bem-vindo ao mundo das APIs REST com Spring!";
+    return Collections.singletonMap("mensagem", mensagem);
+}
+}
+&lt;/code>&lt;/pre>
