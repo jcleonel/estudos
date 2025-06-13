@@ -40,14 +40,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Carrega a página de boas-vindas ou o primeiro tópico por padrão
-    const initialPage = 'boas-vindas'; // ou o nome do primeiro tópico, se preferir
-    loadTopic(initialPage);
+    //const initialPage = 'boas-vindas'; // ou o nome do primeiro tópico, se preferir
+   // loadTopic(initialPage);
 
-    // Opcional: Ativa o primeiro link da lista se não for o de boas vindas
-    // const firstLink = document.querySelector('.sidebar-nav a[data-page="1-fundamentos-rest"]');
-    // if(firstLink){
-    //     firstLink.classList.add('active');
-    //     currentActiveLink = firstLink;
-    //     loadTopic(firstLink.getAttribute('data-page'));
-    // }
+    //Opcional: Ativa o primeiro link da lista se não for o de boas vindas
+    const firstLink = document.querySelector('.sidebar-nav a[data-page="1-fundamentos-rest"]');
+    if(firstLink){
+        firstLink.classList.add('active');
+        currentActiveLink = firstLink;
+        loadTopic(firstLink.getAttribute('data-page'));
+    }
 });
