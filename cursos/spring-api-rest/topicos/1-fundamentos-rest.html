@@ -1,406 +1,74 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Explorador Interativo: Injeção de Dependências no Spring</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Chosen Palette: Warm Neutrals (Stone) with a Slate Blue accent -->
-    <!-- Application Structure Plan: The application is structured into two main parts. First, an accordion for foundational concepts (@Autowired, Ponto de Injeção) to provide quick, collapsible answers. Second, and most importantly, an interactive tab-based section to compare the different DI methods (Constructor, Setter, Field). This structure was chosen to move beyond a static Q&A and create a dynamic comparison tool, allowing the user to directly contrast the pros, cons, and code for each approach, which is the core of the source report's information. A summary chart is included to visually synthesize these comparisons. -->
-    <!-- Visualization & Content Choices: Report Info -> Different DI Methods & their pros/cons. Goal -> Compare and Understand Trade-offs. Viz/Presentation Method -> Interactive tabs for detailed side-by-side comparison of definitions, code, advantages, and disadvantages. A Chart.js bar chart is used to provide a high-level visual summary of these trade-offs, rating each method on key criteria like Testability and Immutability. This turns textual comparison into a more impactful and memorable visualization. Justification -> This interactive design promotes active learning and easier synthesis of complex information compared to a linear text document. Library/Method -> Vanilla JS for tab interactivity, Chart.js for the comparison chart (Canvas-based). -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+<h1>Explorador de Injeção de Dependências</h1>
+<p>Uma análise aprofundada sobre os pontos de injeção e o uso da anotação <code>@Autowired</code> no Spring Framework.</p>
 
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f5f5f4; /* stone-100 */
-            color: #292524; /* stone-800 */
-        }
-        .chart-container {
-            position: relative;
-            height: 400px;
-            width: 100%;
-            max-width: 800px;
-            margin: 2rem auto;
-        }
-        .code-block {
-            background-color: #1c1917; /* stone-900 */
-            color: #e7e5e4; /* stone-200 */
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            overflow-x: auto;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.875rem;
-        }
-        .tab.active {
-            background-color: #334155; /* slate-700 */
-            color: #ffffff;
-            border-color: #334155; /* slate-700 */
-        }
-        .tab:not(.active) {
-            background-color: #e2e8f0; /* slate-200 */
-            color: #475569; /* slate-600 */
-            border-color: #e2e8f0; /* slate-200 */
-        }
-        .accordion-content {
-            transition: max-height 0.3s ease-out, padding 0.3s ease-out;
-            max-height: 0;
-            overflow: hidden;
-        }
-        .accordion-content.open {
-            max-height: 500px; /* Adjust as needed */
-        }
-    </style>
-</head>
-<body class="antialiased">
+<hr style="margin: 2rem 0; border-color: var(--cor-borda);">
 
-    <div class="container mx-auto max-w-5xl p-4 sm:p-6 lg:p-8">
-        <header class="text-center mb-12">
-            <h1 class="text-4xl sm:text-5xl font-bold text-slate-800 mb-4">Explorador Interativo de Injeção de Dependências</h1>
-            <p class="text-lg text-slate-600 max-w-3xl mx-auto">Uma análise aprofundada sobre os pontos de injeção e o uso da anotação <code>@Autowired</code> no Spring Framework.</p>
-        </header>
+<h2>Conceitos Fundamentais</h2>
 
-        <main>
-            <!-- Seção de Conceitos Fundamentais -->
-            <section id="conceitos" class="mb-16">
-                <h2 class="text-3xl font-bold text-slate-700 mb-6 border-b-2 border-slate-300 pb-2">Conceitos Fundamentais</h2>
-                <div class="space-y-4">
-                    <div class="bg-white rounded-lg shadow-md">
-                        <button class="accordion-toggle w-full flex justify-between items-center text-left text-xl font-semibold p-6 focus:outline-none">
-                            <span>1. O que é um Ponto de Injeção?</span>
-                            <span class="transform transition-transform duration-300 text-slate-500 text-2xl ">▸</span>
-                        </button>
-                        <div class="accordion-content">
-                            <div class="p-6 pt-0 text-slate-700 prose max-w-none">
-                                <p>Um **ponto de injeção** é um local específico no código de uma classe onde uma dependência externa é fornecida ou "injetada". Em vez da classe criar ou buscar ativamente suas dependências, o contêiner de Inversão de Controle (IoC) do Spring identifica esses pontos e provê as instâncias necessárias.</p>
-                                <p>No Spring, os pontos de injeção podem ser:</p>
-                                <ul class="list-disc pl-5">
-                                    <li><strong>Construtores:</strong> As dependências são declaradas como parâmetros de um construtor da classe.</li>
-                                    <li><strong>Métodos Setter:</strong> Métodos públicos (geralmente no padrão <code>set<NomeDaDependencia>(...)</code>) são usados para injetar a dependência após a instanciação do objeto.</li>
-                                    <li><strong>Campos (Atributos):</strong> A dependência é injetada diretamente em um campo (variável de instância) da classe, utilizando reflexão.</li>
-                                </ul>
-                                <p>O contêiner IoC utiliza metadados (como anotações ou configuração XML) para identificar esses pontos e realizar a injeção apropriada, promovendo o desacoplamento entre os componentes.</p>
-                            </div>
-                        </div>
-                    </div>
+<h3>1. O que é um Ponto de Injeção?</h3>
+<p>Um <strong>ponto de injeção</strong> é um local específico no código de uma classe onde uma dependência externa é fornecida ou "injetada". Em vez da classe criar ou buscar ativamente suas dependências, o contêiner de Inversão de Controle (IoC) do Spring identifica esses pontos e provê as instâncias necessárias.</p>
+<p>No Spring, os pontos de injeção podem ser:</p>
+<ul>
+    <li><strong>Construtores:</strong> As dependências são declaradas como parâmetros de um construtor da classe.</li>
+    <li><strong>Métodos Setter:</strong> Métodos públicos são usados para injetar a dependência após a instanciação.</li>
+    <li><strong>Campos (Atributos):</strong> A dependência é injetada diretamente em um campo da classe.</li>
+</ul>
 
-                    <div class="bg-white rounded-lg shadow-md">
-                        <button class="accordion-toggle w-full flex justify-between items-center text-left text-xl font-semibold p-6 focus:outline-none">
-                            <span>2. O que é e para que serve a anotação @Autowired?</span>
-                            <span class="transform transition-transform duration-300 text-slate-500 text-2xl">▸</span>
-                        </button>
-                        <div class="accordion-content">
-                            <div class="p-6 pt-0 text-slate-700 prose max-w-none">
-                                <p>A anotação <code>@Autowired</code> no Spring Framework é usada para marcar um ponto de injeção, indicando que uma dependência deve ser automaticamente resolvida e injetada pelo contêiner IoC. Seu principal propósito é **automatizar a injeção de dependências**, simplificando a ligação entre os componentes (beans) da aplicação.</p>
-                                <p>Por padrão, o Spring tenta resolver a dependência pelo **tipo**. Se houver múltiplos beans do mesmo tipo, pode ocorrer um erro de ambiguidade, que pode ser resolvido com outras anotações como <code>@Qualifier</code> ou <code>@Primary</code>.</p>
-                                <p>A anotação <code>@Autowired</code> pode ser aplicada em construtores, métodos setter, campos e até métodos de configuração com nomes arbitrários.</p>
-                            </div>
-                        </div>
-                    </div>
+<h3>2. O que é e para que serve a anotação @Autowired?</h3>
+<p>A anotação <code>@Autowired</code> no Spring Framework é usada para marcar um ponto de injeção, indicando que uma dependência deve ser automaticamente resolvida e injetada pelo contêiner IoC. Seu principal propósito é <strong>automatizar a injeção de dependências</strong>.</p>
 
-                    <div class="bg-white rounded-lg shadow-md">
-                        <button class="accordion-toggle w-full flex justify-between items-center text-left text-xl font-semibold p-6 focus:outline-none">
-                            <span>3. Como o Spring gerencia essas injeções?</span>
-                             <span class="transform transition-transform duration-300 text-slate-500 text-2xl">▸</span>
-                        </button>
-                        <div class="accordion-content">
-                             <div class="p-6 pt-0 text-slate-700 prose max-w-none">
-                                <p>O gerenciamento das injeções é realizado pelo contêiner IoC através de um mecanismo de pós-processamento de beans, principalmente pelo <code>AutowiredAnnotationBeanPostProcessor</code>.</p>
-                                <p>O processo segue estas etapas:</p>
-                                <ol class="list-decimal pl-5">
-                                    <li><strong>Varredura e Definição:</strong> O contêiner lê as definições de todos os beans (via XML, JavaConfig ou component scanning).</li>
-                                    <li><strong>Instanciação:</strong> Quando um bean é instanciado, o <code>AutowiredAnnotationBeanPostProcessor</code> entra em ação.</li>
-                                    <li><strong>Inspeção:</strong> Ele inspeciona a classe do bean em busca de anotações <code>@Autowired</code> em campos, métodos e construtores.</li>
-                                    <li><strong>Resolução de Dependência:</strong> Para cada ponto de injeção, ele consulta o contêiner para encontrar um bean que corresponda ao tipo da dependência requerida.</li>
-                                    <li><strong>Injeção:</strong> Uma vez que a dependência é resolvida, o pós-processador usa reflexão para injetar a instância no campo ou para invocar o método setter/de configuração com a dependência como argumento.</li>
-                                </ol>
-                                <p>Este processo ocorre para cada bean gerenciado, garantindo que todas as dependências marcadas para autowiring sejam satisfeitas antes que o bean esteja completamente inicializado e pronto para uso.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            
-            <!-- Seção de Comparativo Interativo -->
-            <section id="comparativo">
-                <h2 class="text-3xl font-bold text-slate-700 mb-6 border-b-2 border-slate-300 pb-2">Comparativo das Formas de Injeção</h2>
-                <p class="text-slate-600 mb-8">O Spring oferece várias formas de realizar a Injeção de Dependências. Explore cada abordagem para entender suas vantagens, desvantagens e casos de uso recomendados. Clique nas abas abaixo para comparar.</p>
+<h3>3. Como o Spring gerencia essas injeções?</h3>
+<p>O gerenciamento é realizado pelo contêiner IoC através de um pós-processamento de beans. O processo segue estas etapas:</p>
+<ol>
+    <li><strong>Varredura e Definição:</strong> O contêiner lê as definições de todos os beans.</li>
+    <li><strong>Instanciação e Inspeção:</strong> Ao instanciar um bean, um processador busca por anotações <code>@Autowired</code>.</li>
+    <li><strong>Resolução de Dependência:</strong> Ele consulta o contêiner para encontrar um bean que corresponda ao tipo.</li>
+    <li><strong>Injeção:</strong> Usa reflexão para injetar a instância no campo ou invocar o método.</li>
+</ol>
 
-                <div class="flex flex-wrap gap-2 mb-6">
-                    <button class="tab active text-lg font-semibold py-3 px-6 rounded-t-lg border-b-4 transition-colors duration-300" onclick="showTab('construtor')">Via Construtor</button>
-                    <button class="tab text-lg font-semibold py-3 px-6 rounded-t-lg border-b-4 transition-colors duration-300" onclick="showTab('setter')">Via Setter</button>
-                    <button class="tab text-lg font-semibold py-3 px-6 rounded-t-lg border-b-4 transition-colors duration-300" onclick="showTab('atributo')">Via Atributo</button>
-                </div>
+<hr style="margin: 2rem 0; border-color: var(--cor-borda);">
 
-                <div class="bg-white rounded-b-lg rounded-r-lg shadow-xl p-8">
-                    <!-- Conteúdo da Aba Construtor -->
-                    <div id="construtor-content" class="tab-content">
-                        <h3 class="text-2xl font-bold text-slate-800 mb-4">Injeção via Construtor</h3>
-                        <p class="mb-6 text-slate-700">As dependências são declaradas como parâmetros do construtor da classe. É a forma **recomendada pelo time do Spring** para dependências obrigatórias.</p>
-                        <div class="code-block mb-6">
-                            <pre><code class="language-java">
-@Component
+<h2>Comparativo das Formas de Injeção</h2>
+
+<h3>Injeção via Construtor (Recomendado)</h3>
+<p>As dependências são declaradas como parâmetros do construtor. É a forma recomendada pelo time do Spring para dependências obrigatórias.</p>
+<pre><code>@Component
 public class MeuServico {
     private final OutroServico outroServico;
 
-    // @Autowired é opcional aqui se for o único construtor
     public MeuServico(OutroServico outroServico) {
         this.outroServico = outroServico;
     }
-}
-                            </code></pre>
-                        </div>
-                        <div class="grid md:grid-cols-2 gap-6">
-                            <div>
-                                <h4 class="text-xl font-semibold text-green-700 mb-3">Vantagens</h4>
-                                <ul class="list-disc pl-5 space-y-2 text-slate-700">
-                                    <li><span class="font-bold">Imutabilidade:</span> Permite declarar dependências como <code>final</code>, garantindo que não sejam alteradas.</li>
-                                    <li><span class="font-bold">Estado Consistente:</span> O objeto é sempre criado em um estado válido, com todas as dependências obrigatórias presentes.</li>
-                                    <li><span class="font-bold">Testabilidade Alta:</span> Facilita a criação de testes unitários, pois as dependências (mocks) podem ser passadas diretamente no construtor.</li>
-                                    <li><span class="font-bold">Clareza:</span> As dependências obrigatórias ficam explícitas na assinatura do construtor.</li>
-                                </ul>
-                            </div>
-                             <div>
-                                <h4 class="text-xl font-semibold text-red-700 mb-3">Desvantagens</h4>
-                                <ul class="list-disc pl-5 space-y-2 text-slate-700">
-                                    <li><span class="font-bold">Verbosidade:</span> Pode levar a construtores com muitos parâmetros, o que pode ser um sinal de que a classe tem responsabilidades demais (violação do SRP).</li>
-                                    <li><span class="font-bold">Dependências Opcionais:</span> Menos direto para lidar com dependências opcionais em comparação com a injeção via setter.</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
+}</code></pre>
+<ul>
+    <li><strong>Vantagens:</strong> Imutabilidade (campos `final`), estado consistente, alta testabilidade.</li>
+    <li><strong>Desvantagens:</strong> Verbosidade se houver muitas dependências.</li>
+</ul>
 
-                    <!-- Conteúdo da Aba Setter -->
-                    <div id="setter-content" class="tab-content hidden">
-                        <h3 class="text-2xl font-bold text-slate-800 mb-4">Injeção via Setter</h3>
-                        <p class="mb-6 text-slate-700">As dependências são injetadas através de métodos `setter` públicos. É a abordagem mais indicada para **dependências opcionais**.</p>
-                        <div class="code-block mb-6">
-                            <pre><code class="language-java">
-@Component
+<h3>Injeção via Setter</h3>
+<p>As dependências são injetadas através de métodos `setter` públicos. Indicada para dependências opcionais.</p>
+<pre><code>@Component
 public class MeuServico {
     private OutroServico outroServico;
-    private ServicoOpcional servicoOpcional;
 
     @Autowired
     public void setOutroServico(OutroServico outroServico) {
         this.outroServico = outroServico;
     }
+}</code></pre>
+<ul>
+    <li><strong>Vantagens:</strong> Ideal para dependências opcionais com <code>@Autowired(required = false)</code>.</li>
+    <li><strong>Desvantagens:</strong> Mutabilidade, o objeto pode ter um estado incompleto temporariamente.</li>
+</ul>
 
-    @Autowired(required = false)
-    public void setServicoOpcional(ServicoOpcional servicoOpcional) {
-        this.servicoOpcional = servicoOpcional;
-    }
-}
-                            </code></pre>
-                        </div>
-                        <div class="grid md:grid-cols-2 gap-6">
-                            <div>
-                                <h4 class="text-xl font-semibold text-green-700 mb-3">Vantagens</h4>
-                                <ul class="list-disc pl-5 space-y-2 text-slate-700">
-                                    <li><span class="font-bold">Dependências Opcionais:</span> Ideal para dependências que não são obrigatórias, usando <code>@Autowired(required = false)</code>.</li>
-                                    <li><span class="font-bold">Reconfigurabilidade:</span> Permite, teoricamente, que as dependências sejam alteradas após a criação do bean (uso raro).</li>
-                                </ul>
-                            </div>
-                             <div>
-                                <h4 class="text-xl font-semibold text-red-700 mb-3">Desvantagens</h4>
-                                <ul class="list-disc pl-5 space-y-2 text-slate-700">
-                                    <li><span class="font-bold">Mutabilidade:</span> Não permite o uso de campos <code>final</code>, tornando o objeto mutável.</li>
-                                    <li><span class="font-bold">Estado Incompleto:</span> O objeto é instanciado primeiro e só depois suas dependências são injetadas.</li>
-                                    <li><span class="font-bold">Testabilidade Moderada:</span> Requer a chamada dos métodos setter nos testes para injetar mocks.</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Conteúdo da Aba Atributo -->
-                    <div id="atributo-content" class="tab-content hidden">
-                        <h3 class="text-2xl font-bold text-slate-800 mb-4">Injeção via Atributo (Campo)</h3>
-                        <p class="mb-6 text-slate-700">As dependências são injetadas diretamente nos campos da classe. Embora seja a forma mais concisa, é **geralmente desencorajada** para código de produção.</p>
-                        <div class="code-block mb-6">
-                            <pre><code class="language-java">
-@Component
+<h3>Injeção via Atributo (Campo)</h3>
+<p>As dependências são injetadas diretamente nos campos. É a forma mais concisa, mas geralmente desencorajada.</p>
+<pre><code>@Component
 public class MeuServico {
     @Autowired
     private OutroServico outroServico;
-
-    @Autowired(required = false)
-    private ServicoOpcional servicoOpcional;
-}
-                            </code></pre>
-                        </div>
-                        <div class="grid md:grid-cols-2 gap-6">
-                            <div>
-                                <h4 class="text-xl font-semibold text-green-700 mb-3">Vantagens</h4>
-                                <ul class="list-disc pl-5 space-y-2 text-slate-700">
-                                    <li><span class="font-bold">Concisão:</span> É a forma mais curta e com menos código "boilerplate" para escrever.</li>
-                                </ul>
-                            </div>
-                             <div>
-                                <h4 class="text-xl font-semibold text-red-700 mb-3">Desvantagens</h4>
-                                <ul class="list-disc pl-5 space-y-2 text-slate-700">
-                                    <li><span class="font-bold">Testabilidade Baixa:</span> Dificulta muito os testes unitários sem o contêiner Spring, pois requer reflexão para injetar mocks em campos privados.</li>
-                                    <li><span class="font-bold">Violação do Encapsulamento:</span> Esconde as dependências, que não fazem parte da API pública da classe (construtores ou setters).</li>
-                                    <li><span class="font-bold">Mutabilidade:</span> Impede o uso de campos <code>final</code>.</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            
-            <section id="grafico-comparativo" class="mt-16">
-                 <h2 class="text-3xl font-bold text-slate-700 mb-6 border-b-2 border-slate-300 pb-2">Visualização Comparativa</h2>
-                 <p class="text-slate-600 mb-8">Este gráfico resume a adequação de cada método de injeção com base em critérios chave de design de software. Uma pontuação mais alta indica um melhor alinhamento com o critério.</p>
-                <div class="bg-white rounded-lg shadow-xl p-4 sm:p-6">
-                    <div class="chart-container">
-                        <canvas id="diComparisonChart"></canvas>
-                    </div>
-                </div>
-            </section>
-
-        </main>
-
-        <footer class="text-center mt-16 pt-8 border-t border-slate-300">
-            <p class="text-slate-500">Explorador Interativo de DI no Spring. Criado para facilitar o aprendizado.</p>
-        </footer>
-    </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const tabs = document.querySelectorAll('.tab');
-            const tabContents = document.querySelectorAll('.tab-content');
-
-            window.showTab = (tabName) => {
-                tabContents.forEach(content => {
-                    content.classList.add('hidden');
-                });
-                document.getElementById(tabName + '-content').classList.remove('hidden');
-
-                tabs.forEach(tab => {
-                    tab.classList.remove('active');
-                });
-                document.querySelector(`.tab[onclick="showTab('${tabName}')"]`).classList.add('active');
-            };
-            
-            const accordionToggles = document.querySelectorAll('.accordion-toggle');
-            accordionToggles.forEach(toggle => {
-                toggle.addEventListener('click', () => {
-                    const content = toggle.nextElementSibling;
-                    const icon = toggle.querySelector('span:last-child');
-                    
-                    const isOpen = content.classList.contains('open');
-                    
-                    document.querySelectorAll('.accordion-content.open').forEach(openContent => {
-                       openContent.classList.remove('open');
-                       openContent.previousElementSibling.querySelector('span:last-child').classList.remove('rotate-90');
-                    });
-                    
-                    if(!isOpen) {
-                        content.classList.add('open');
-                        icon.classList.add('rotate-90');
-                    }
-                });
-            });
-
-
-            const ctx = document.getElementById('diComparisonChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Via Construtor', 'Via Setter', 'Via Atributo'],
-                    datasets: [
-                        {
-                            label: 'Testabilidade',
-                            data: [5, 3, 1],
-                            backgroundColor: 'rgba(59, 130, 246, 0.7)',
-                            borderColor: 'rgba(59, 130, 246, 1)',
-                            borderWidth: 1
-                        },
-                        {
-                            label: 'Imutabilidade',
-                            data: [5, 1, 1],
-                            backgroundColor: 'rgba(16, 185, 129, 0.7)',
-                            borderColor: 'rgba(16, 185, 129, 1)',
-                            borderWidth: 1
-                        },
-                        {
-                            label: 'Clareza do Contrato',
-                            data: [4, 3, 2],
-                            backgroundColor: 'rgba(249, 115, 22, 0.7)',
-                            borderColor: 'rgba(249, 115, 22, 1)',
-                            borderWidth: 1
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 5,
-                            ticks: {
-                                stepSize: 1,
-                                color: '#475569'
-                            },
-                            grid: {
-                                color: '#e2e8f0'
-                            }
-                        },
-                        x: {
-                             ticks: {
-                                color: '#475569'
-                            },
-                             grid: {
-                                display: false
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: {
-                                color: '#334155'
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: '#1e293b',
-                            titleColor: '#f1f5f9',
-                            bodyColor: '#cbd5e1',
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.parsed.y !== null) {
-                                        label += context.parsed.y + '/5';
-                                    }
-                                    return label;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        });
-    </script>
-
-</body>
-</html>
-```
-
-### Como Utilizar a Aplicação
-
-1.  **Conceitos Fundamentais:** Na primeira seção, você encontrará um resumo dos conceitos essenciais em um formato de "acordeão". Clique em cada pergunta para expandir e ver a resposta. Isso ajuda a manter a interface limpa e focada.
-2.  **Comparativo Interativo:** Esta é a seção principal.
-    * Clique nas abas ("Via Construtor", "Via Setter", "Via Atributo") para alternar entre as diferentes formas de injeção de dependência.
-    * Cada aba apresenta uma definição, um exemplo de código claro, e uma lista de vantagens e desvantagens.
-3.  **Visualização Comparativa:** Ao final, um gráfico de barras resume visualmente a comparação entre os métodos. Ele os avalia em três eixos importantes: Testabilidade, Imutabilidade e Clareza do Contrato. Isso deve te ajudar a entender rapidamente os *trade-offs* de cada abordagem.
-
-Esta ferramenta foi projetada para ser um recurso de consulta rápida e um guia de estudo. Sinta-se à vontade para explorá-la e, claro, me fazer mais perguntas à medida que avança no seu curso. Bom estu
+}</code></pre>
+<ul>
+    <li><strong>Vantagens:</strong> Muito conciso.</li>
+    <li><strong>Desvantagens:</strong> Baixa testabilidade, viola encapsulamento, esconde as dependências.</li>
+</ul>
