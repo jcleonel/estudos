@@ -202,3 +202,39 @@ No arquivo `federation.config.ts`, o microfrontend declara o que ele expõe para
 ### 3.4. Testes
 
 Os testes unitários são desenvolvidos com **Jest**. Os arquivos de teste possuem a extensão `.spec.ts` e ficam ao lado dos componentes e serviços que eles testam. O foco principal é testar a lógica de negócio contida nos arquivos TypeScript (`.ts`), e não a renderização de layout (HTML/CSS). A cobertura de código atual do projeto está em aproximadamente **88%**.
+
+
+
+
+
+
+
+
+
+
+------------------------------------------------
+
+
+
+
+
+
+
+
+# Relatório de Handover: Projetos Custody (Frontend e BFF)
+
+**Público-alvo:** Equipe de desenvolvimento Depositária.  
+**Autores:** Jean Carlos Leonel Da Costa, com contribuições de Guilherme Henrique Sala Pais (equipe anterior).  
+**Data:** 14 de agosto de 2025
+
+## 1. Introdução e Objetivo
+
+Este documento serve como o relatório oficial de handover (transferência de conhecimento) dos projetos que compõem a funcionalidade de **Consulta de Custódia**. O seu objetivo é fornecer à equipe Depositária todo o conhecimento necessário para entender a arquitetura, a estrutura e o processo de desenvolvimento local dos sistemas, permitindo a manutenção e evolução contínua dos mesmos.
+
+Os sistemas em escopo são:
+* **Backend-for-Frontend:** `blc-pblc-bff-custody`
+* **Frontend (Microfrontend):** `blc-pblc-mfe-custody-ui`
+
+### 1.1. Diagrama de Arquitetura Simplificado
+
+O diagrama abaixo ilustra o fluxo de comunicação entre os componentes envolvidos na solução:
