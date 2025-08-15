@@ -239,6 +239,11 @@ Os sistemas em escopo são:
 
 O diagrama abaixo ilustra o fluxo de comunicação entre os componentes envolvidos na solução:
 
++------------+     +---------------------------+     +-----------------+     +----------------------+
+|   Usuário  |----->| Frontend (Angular MFE)    |----->| BFF (Quarkus)   |----->| Backend Accounts API |
+|            |<-----|                           |<-----|                 |<-----|                      |
++------------+     +---------------------------+     +--------+--------+     +----------------------+
+
 
 ### 1.2. Links Rápidos e Repositórios
 
