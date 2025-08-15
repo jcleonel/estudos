@@ -323,10 +323,24 @@ O `AccountsRestClient` é a peça final que executa a comunicação. É uma inte
     quarkus dev
     ```
 
-4.  **Acesso:**
+   4. Entendendo o Console Interativo do Quarkus:
+Após iniciar, você notará que o terminal exibe a mensagem Test paused. Este é o recurso de Teste Contínuo do Quarkus, que roda em paralelo com a aplicação.
+
+Sua aplicação já está rodando normalmente e pode ser acessada.
+
+Pressione r para rodar a suíte de testes completa uma vez. Após isso, o Quarkus irá monitorar suas alterações e rodar apenas os testes relevantes automaticamente, dando feedback instantâneo.
+
+Se não desejar utilizar este recurso, você pode iniciar a aplicação com o comando: ./mvnw quarkus:dev -Dquarkus.test.continuous-testing=disabled
+
+5.  **Acesso:**
     A aplicação estará disponível em `http://localhost:8080`. A interface do Swagger para visualização dos endpoints pode ser acessada em `http://localhost:8080/q/swagger-ui`.
 
     **Observação Importante:** Para facilitar o desenvolvimento local, a validação de token de autenticação foi desabilitada nos ambientes `local` e `dev`.
+
+6 Como Parar a Aplicação:
+Para encerrar a execução do Quarkus, volte para a janela do terminal onde a aplicação está rodando e pressione o atalho:
+
+Ctrl + C
 
 ### 2.4. Testes
 
