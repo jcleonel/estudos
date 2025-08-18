@@ -408,6 +408,36 @@ No arquivo `federation.config.ts`, o microfrontend declara o que ele expõe para
     npm install
     ```
 
+    Observação: Resolvendo Possíveis Erros de Rede (Proxy/SSL)
+Se o comando npm install falhar com erros como UNABLE_TO_GET_ISSUER_CERT_LOCALLY, ERESOLVE ou erros de timeout, é quase certeza que você precisa configurar o NPM para a rede corporativa.
+
+Como alguns desenvolvedores já podem ter essa configuração, este passo só é necessário se o erro ocorrer.
+
+Como resolver:
+
+Crie um arquivo chamado .npmrc na pasta do seu usuário (ex: C:\Users\p-jeacosta). Se o arquivo já existir, apenas adicione as linhas que estiverem faltando.
+
+Cole o seguinte conteúdo dentro do arquivo .npmrc:
+
+Properties
+
+strict-ssl=false
+@b3:registry=https://nexus.intraservice.corp/repository/npm-b3/
+http_proxy=http://proxydc.intraservice.corp:8080
+https_proxy=http://proxydc.intraservice.corp:8080
+no_proxy=.intraservice.corp,.internalenv.corp
+O que esse arquivo faz?
+
+strict-ssl=false: Desabilita a verificação rigorosa de certificados SSL, resolvendo o erro UNABLE_TO_GET_ISSUER_CERT_LOCALLY.
+
+@b3:registry=...: Configura um "scoped registry". Diz ao NPM que todos os pacotes que começam com @b3 (como a lib-picker) devem ser baixados do repositório interno da empresa (Nexus), e não do repositório público.
+
+http_proxy e https_proxy: Direciona todo o tráfego de internet do NPM através do proxy da empresa.
+
+no_proxy: Cria exceções para endereços internos, que não devem passar pelo proxy.
+
+Após criar ou salvar o arquivo .npmrc, apague a pasta node_modules e o arquivo package-lock.json do projeto e tente rodar npm install novamente.
+
 3.  **Configurar o Proxy de Desenvolvimento:**
     Crie um arquivo chamado `proxy.conf.mjs` na raiz do projeto. Este arquivo **não deve ser versionado** no Git.
 
