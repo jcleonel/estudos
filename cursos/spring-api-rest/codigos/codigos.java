@@ -1,72 +1,129 @@
-@Service
-@RequiredArgsConstructor
-@Slf4j
-public class MovementPddService {
+// ... (início da classe com os métodos V1 existentes) ...
 
-    private final MovementUseCase useCase;
-    private final MovementProducerService producer;
+public class MovementRequestResponseMapper {
+    
+    // ... (todos os métodos toMessageOutputComplete, buildError, etc. para V1 continuam aqui) ...
 
-    @Value("${module.pdd.kafka.producer.topics}")
-    private String pddTopic;
-
-    /**
-     * Método usado pelo Controller. Permanece recebendo V1, mas agora
-     * cria um Contexto antes de chamar o novo método 'process'.
-     */
-    public PddDataInput processMovement(MessageInput<Movement> messageInput) {
-        final String transactionId = messageInput.getAccountMovementV1().getMessageControl().getTransactionId();
-        log.info("Requisição PDD (síncrona) para movimentação de custódia. transactionId: {}", transactionId);
-        
-        // Cria o contexto a partir da mensagem V1
-        MovementContext context = MovementContext.ofV1(messageInput);
-        
-        // Chama o método 'process' refatorado
-        PddDataInput inputPdd = process(context);
-        
-        postMessagePdd(messageInput, inputPdd); // Este método pode continuar como está por enquanto
-        log.info("Requisição PDD para movimentação de custódia finalizada com sucesso. transactionId: {}", transactionId);
-        return inputPdd;
-    }
+    // =====================================================================
+    // NOVOS MÉTODOS PARA RESPOSTAS V2
+    // =====================================================================
 
     /**
-     * MÉTODO 'PROCESS' REFATORADO.
-     * Agora recebe o MovementContext e orquestra a chamada para o UseCase.
+     * Constrói uma mensagem de SUCESSO completa no formato de resposta V2.
      */
-    public PddDataInput process(MovementContext context) {
-        final String transactionId = context.getTransactionId();
-        log.info("Iniciando processamento de negócio para a versão {}. transactionId: {}", context.getVersion(), transactionId);
+    public static AccountMovementV2Response<MovementMessageOutput> toMessageOutputV2(
+            String topic, MovementContext context, int totalUpdates) {
 
-        PddDataInput pddDataInput;
+        MessageInputV2 originalV2 = context.getAsV2();
+        MovementV2 dataV2 = originalV2.getAccountMovementV2().getData();
+        MessageControl originalControl = originalV2.getAccountMovementV2().getMessageControl();
 
-        if ("V1".equals(context.getVersion())) {
-            // Se for V1, chama o método 'execute' existente no UseCase
-            pddDataInput = useCase.execute(context.getAsV1());
-        } else if ("V2".equals(context.getVersion())) {
-            // Se for V2, chamará uma nova lógica de negócio no UseCase
-            // Por enquanto, apenas definimos a chamada. Implementaremos o executeV2 no próximo passo.
-            log.info("Direcionando para o fluxo de negócio da V2...");
-            pddDataInput = useCase.executeV2(context.getAsV2()); // Placeholder para o próximo passo
-        } else {
-            throw new IllegalArgumentException("Versão de mensagem não suportada para processamento: " + context.getVersion());
-        }
+        // O payload da resposta pode ser o mesmo da V1 (MovementMessageOutput),
+        // ou um novo 'MovementMessageOutputV2' se os campos forem diferentes.
+        // Vamos reutilizar por simplicidade.
+        MovementMessageOutput outputData = new MovementMessageOutput(
+                dataV2.getRegisterAccountCode(),
+                dataV2.getTickerSymbolTypeCode(),
+                dataV2.getTickerSymbol(),
+                dataV2.getTotalMovementQuantity(),
+                totalUpdates,
+                "Processamento terminado com sucesso",
+                "SUCCESS"
+        );
 
-        log.info("Processamento de negócio para transactionId: {} finalizado com sucesso.", transactionId);
-        return pddDataInput;
+        MessageControl newControl = new MessageControl(
+                topic, originalControl.getTo(), originalControl.getFrom(), false,
+                "producerSystemModule", LocalDateTime.now().toString(),
+                originalControl.getTransactionId(), "1",
+                "AccountMovementV2Response.json", List.of()
+        );
+
+        AccountMovementV2<MovementMessageOutput> accountV2 = new AccountMovementV2<>(newControl, outputData);
+        return new AccountMovementV2Response<>(accountV2);
     }
 
-    // O método postMessagePdd pode ser mantido por agora, pois ele depende do 'messageInput' V1
-    // que pode ser extraído do resultado do UseCase se necessário, ou refatorado depois.
-    public void postMessagePdd(MessageInput<Movement> messageInput, PddDataInput pddDataInput) {
-        // ... (lógica existente) ...
+    /**
+     * Constrói uma mensagem de ERRO (ApplicationDomainException) no formato de resposta V2.
+     */
+    public static AccountMovementV2Response<MovementMessageOutput> toApplicationDomainExceptionV2(
+            String errorTopic, ApplicationError error, MovementContext context) {
+        
+        // Lógica similar à de sucesso, mas construindo um payload de erro
+        // ...
+        // Retorna um new AccountMovementV2Response<>(...) com a lista de erros preenchida
+        return null; // Placeholder para a implementação completa
     }
+
+    // ... (outros métodos de erro para V2, como toValidationExceptionV2, etc.) ...
 }
 
 
 
 
 
+@Service
+@Slf4j
+public class MovementKafkaConnector extends KafkaConsumerClass {
 
+    // ... (injeções e métodos que já ajustamos) ...
 
+    public void execute(MovementContext context) {
+        try {
+            // ... (validação e chamada ao pddService.process(context)) ...
+            PddDataInput pddDataInput = movementPddService.process(context);
 
+            // Chamada final para postar a resposta de SUCESSO
+            postResponseMessage(context, pddDataInput);
 
+        } catch (Exception e) {
+            log.error("Erro ao executar processamento para TransactionId: {}. Erro: {}", context.getTransactionId(), e.getMessage(), e);
+            
+            // Chamada final para postar a resposta de ERRO
+            postErrorMessage(context, e);
+        }
+        // ...
+    }
 
+    /**
+     * Envia a mensagem de SUCESSO para o tópico de resposta, no formato correto (V1 ou V2).
+     */
+    private void postResponseMessage(MovementContext context, PddDataInput pddDataInput) {
+        log.info("Enviando resposta de sucesso para a versão {}. TransactionId: {}", context.getVersion(), context.getTransactionId());
+
+        if ("V2".equals(context.getVersion())) {
+            var responseV2 = MovementRequestResponseMapper.toMessageOutputV2(
+                    this.topic, context, pddDataInput.getTotalUpdates());
+            this.producer.postMessage(responseV2); // Producer envia o objeto V2
+        } else {
+            var responseV1 = MovementRequestResponseMapper.toMessageOutputComplete(
+                    this.topic, context.getAsV1(), pddDataInput.getTotalUpdates());
+            this.producer.postMessage(responseV1); // Producer envia o objeto V1
+        }
+    }
+
+    /**
+     * Envia a mensagem de ERRO para o tópico de erro, no formato correto (V1 ou V2).
+     */
+    private void postErrorMessage(MovementContext context, Exception exception) {
+        log.info("Enviando resposta de erro para a versão {}. TransactionId: {}", context.getVersion(), context.getTransactionId());
+
+        // Lógica para mapear diferentes tipos de exceção para diferentes mappers
+        Object errorResponse = null;
+        if (exception instanceof ApplicationDomainException) {
+            ApplicationDomainException ex = (ApplicationDomainException) exception;
+            if ("V2".equals(context.getVersion())) {
+                errorResponse = MovementRequestResponseMapper.toApplicationDomainExceptionV2(
+                        this.errorTopic, ex.getError(), context);
+            } else {
+                errorResponse = MovementRequestResponseMapper.toApplicationDomainException(
+                        this.errorTopic, ex.getError(), context.getAsV1());
+            }
+        } 
+        // ... else if (exception instanceof ValidationException) { ... }
+        // ... (repetir o padrão para outros tipos de exceção) ...
+
+        if (errorResponse != null) {
+            this.producer.postMessageError(errorResponse);
+        }
+    }
+}
