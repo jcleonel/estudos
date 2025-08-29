@@ -1,47 +1,72 @@
-@Component
+@Service
 @RequiredArgsConstructor
-public class MovementValidator {
+@Slf4j
+public class MovementPddService {
 
-    private final Validator validator;
+    private final MovementUseCase useCase;
+    private final MovementProducerService producer;
 
-    public void validateAndThrow(MovementContext context) throws ApplicationDomainException {
-        if ("V1".equals(context.getVersion())) {
-            // Valida o tipo específico V1
-            Set<ConstraintViolation<MessageInput<Movement>>> violations = validator.validate(context.getAsV1());
-            // Chama o método auxiliar para tratar as violações
-            buildAndThrowApplicationException(violations);
-        } else if ("V2".equals(context.getVersion())) {
-            // Valida o tipo específico V2
-            Set<ConstraintViolation<MessageInputV2>> violations = validator.validate(context.getAsV2());
-            // Chama o mesmo método auxiliar
-            buildAndThrowApplicationException(violations);
-        } else {
-            throw new IllegalArgumentException("Versão de mensagem não suportada para validação: " + context.getVersion());
-        }
+    @Value("${module.pdd.kafka.producer.topics}")
+    private String pddTopic;
+
+    /**
+     * Método usado pelo Controller. Permanece recebendo V1, mas agora
+     * cria um Contexto antes de chamar o novo método 'process'.
+     */
+    public PddDataInput processMovement(MessageInput<Movement> messageInput) {
+        final String transactionId = messageInput.getAccountMovementV1().getMessageControl().getTransactionId();
+        log.info("Requisição PDD (síncrona) para movimentação de custódia. transactionId: {}", transactionId);
+        
+        // Cria o contexto a partir da mensagem V1
+        MovementContext context = MovementContext.ofV1(messageInput);
+        
+        // Chama o método 'process' refatorado
+        PddDataInput inputPdd = process(context);
+        
+        postMessagePdd(messageInput, inputPdd); // Este método pode continuar como está por enquanto
+        log.info("Requisição PDD para movimentação de custódia finalizada com sucesso. transactionId: {}", transactionId);
+        return inputPdd;
     }
 
     /**
-     * Método auxiliar privado que constrói e lança a exceção a partir de um Set de violações.
-     * Usando Set<?> ele consegue aceitar qualquer tipo de Set (de V1, V2, etc.).
-     *
-     * @param violations O conjunto de violações encontrado.
-     * @throws ApplicationDomainException sempre que a lista de violações não estiver vazia.
+     * MÉTODO 'PROCESS' REFATORADO.
+     * Agora recebe o MovementContext e orquestra a chamada para o UseCase.
      */
-    private void buildAndThrowApplicationException(Set<?> violations) throws ApplicationDomainException {
-        if (!violations.isEmpty()) {
-            List<ApplicationErrorDescription> errorsDetails = violations.stream()
-                    .map(v -> (ConstraintViolation<?>) v) // Faz um cast seguro para o tipo com wildcard
-                    .map(validation -> {
-                        ApplicationErrorDescription errorDescription = new ApplicationErrorDescription(
-                                ApplicationErrorListEnum.VALIDATION_ERROR);
-                        errorDescription.setErrorDescription(
-                                String.format("Erro na propriedade '%s': %s",
-                                        validation.getPropertyPath(), validation.getMessage()));
-                        return errorDescription;
-                    }).toList();
+    public PddDataInput process(MovementContext context) {
+        final String transactionId = context.getTransactionId();
+        log.info("Iniciando processamento de negócio para a versão {}. transactionId: {}", context.getVersion(), transactionId);
 
-            ApplicationError applicationError = new ApplicationError("VALIDATION_ERROR", errorsDetails);
-            throw new ApplicationDomainException(applicationError);
+        PddDataInput pddDataInput;
+
+        if ("V1".equals(context.getVersion())) {
+            // Se for V1, chama o método 'execute' existente no UseCase
+            pddDataInput = useCase.execute(context.getAsV1());
+        } else if ("V2".equals(context.getVersion())) {
+            // Se for V2, chamará uma nova lógica de negócio no UseCase
+            // Por enquanto, apenas definimos a chamada. Implementaremos o executeV2 no próximo passo.
+            log.info("Direcionando para o fluxo de negócio da V2...");
+            pddDataInput = useCase.executeV2(context.getAsV2()); // Placeholder para o próximo passo
+        } else {
+            throw new IllegalArgumentException("Versão de mensagem não suportada para processamento: " + context.getVersion());
         }
+
+        log.info("Processamento de negócio para transactionId: {} finalizado com sucesso.", transactionId);
+        return pddDataInput;
+    }
+
+    // O método postMessagePdd pode ser mantido por agora, pois ele depende do 'messageInput' V1
+    // que pode ser extraído do resultado do UseCase se necessário, ou refatorado depois.
+    public void postMessagePdd(MessageInput<Movement> messageInput, PddDataInput pddDataInput) {
+        // ... (lógica existente) ...
     }
 }
+
+
+
+
+
+
+
+
+
+
