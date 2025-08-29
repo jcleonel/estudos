@@ -1,54 +1,97 @@
-package br.com.b3.accounts.features.movement.models; // Ou um pacote compartilhado
+package br.com.b3.accounts.features.movement.models;
 
 import br.com.b3.accounts.util.models.MessageControl;
 import br.com.b3.accounts.util.models.MessageInput;
 import br.com.b3.accounts.util.models.MessageInputV2;
 import lombok.Getter;
 
-/**
- * Objeto transportador que encapsula uma mensagem de movimento,
- * seja V1 ou V2, para processamento unificado no início do fluxo do consumidor.
- */
 @Getter
 public class MovementContext {
     private final String version;
     private final String transactionId;
     private final String from;
-    private final Object originalMessage; // Armazena MessageInput<Movement> ou MessageInputV2
+    private final String correlationId; // Novo campo, pode ser nulo para V1
+    private final Object originalMessage;
 
-    private MovementContext(String version, String transactionId, String from, Object originalMessage) {
+    private MovementContext(String version, String transactionId, String from, String correlationId, Object originalMessage) {
         this.version = version;
         this.transactionId = transactionId;
         this.from = from;
+        this.correlationId = correlationId;
         this.originalMessage = originalMessage;
     }
 
-    // Fábrica estática para criar um contexto a partir de uma mensagem V1
+    // Fábrica para V1 (passa null para correlationId)
     public static MovementContext ofV1(MessageInput<Movement> messageV1) {
         MessageControl control = messageV1.getAccountMovementV1().getMessageControl();
-        return new MovementContext("V1", control.getTransactionId(), control.getFrom(), messageV1);
+        return new MovementContext("V1", control.getTransactionId(), control.getFrom(), null, messageV1);
     }
 
-    // Fábrica estática para criar um contexto a partir de uma mensagem V2
+    // Fábrica para V2 (extrai e armazena o correlationId)
     public static MovementContext ofV2(MessageInputV2 messageV2) {
         MessageControl control = messageV2.getAccountMovementV2().getMessageControl();
-        return new MovementContext("V2", control.getTransactionId(), control.getFrom(), messageV2);
+        String corrId = messageV2.getAccountMovementV2().getData().getCorrelationId();
+        return new MovementContext("V2", control.getTransactionId(), control.getFrom(), corrId, messageV2);
     }
 
-    // Métodos de conveniência para obter o payload no tipo correto de forma segura
-    @SuppressWarnings("unchecked")
-    public MessageInput<Movement> getAsV1() {
-        if (!"V1".equals(version)) {
-            throw new IllegalStateException("Não é possível obter como V1 uma mensagem da versão " + version);
+    /**
+     * **NOVO MÉTODO INTELIGENTE**
+     * Gera a chave de dededuplicação baseada na versão da mensagem.
+     * @return A chave de unicidade para o Redis.
+     */
+    public String getDeduplicationKey() {
+        if ("V1".equals(this.version)) {
+            // Lógica antiga para V1
+            return this.transactionId + this.from;
         }
-        return (MessageInput<Movement>) originalMessage;
+        if ("V2".equals(this.version)) {
+            // Nova lógica para V2
+            return this.transactionId + this.correlationId;
+        }
+        // Medida de segurança caso uma V3 seja adicionada sem atualizar aqui
+        throw new UnsupportedOperationException("Não há lógica de dededuplicação para a versão: " + this.version);
     }
+    
+    // ... métodos getAsV1() e getAsV2() permanecem os mesmos ...
+}
 
-    public MessageInputV2 getAsV2() {
-        if (!"V2".equals(version)) {
-            throw new IllegalStateException("Não é possível obter como V2 uma mensagem da versão " + version);
+
+
+
+
+
+
+
+
+
+@Service
+@RequiredArgsConstructor
+public class MovementDeduplicationService {
+
+    // ... campos existentes (expires, PROCESSED_IDS_SET_KEY, jedisPool) ...
+
+    /**
+     * Método refatorado para aceitar uma lista de MovementContext.
+     * Agora ele é agnóstico à versão da mensagem.
+     */
+    public List<Boolean> addNewIds(List<MovementContext> contexts) {
+        try (Jedis jedis = jedisPool.getResource()) {
+            Pipeline pipeline = jedis.pipelined();
+            List<Response<Long>> responses = new ArrayList<>();
+            
+            for (MovementContext ctx : contexts) {
+                // A construção da chave é simplificada, pois a responsabilidade agora é do Contexto
+                String deduplicationKey = ctx.getDeduplicationKey();
+                
+                String redisKey = PROCESSED_IDS_SET_KEY.concat(":").concat(deduplicationKey);
+                
+                responses.add(pipeline.setnx(redisKey, ""));
+                pipeline.expire(redisKey, expires);
+            }
+            
+            pipeline.sync();
+            return responses.stream().map(r -> r.get() == 1L).toList();
         }
-        return (MessageInputV2) originalMessage;
     }
 }
 
@@ -56,92 +99,62 @@ public class MovementContext {
 
 
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-// ... outras importações ...
-import br.com.b3.accounts.features.movement.models.MovementContext;
-import br.com.b3.accounts.util.models.MessageInputV2;
 
 
 @Service
 @Slf4j
 public class MovementKafkaConnector extends KafkaConsumerClass {
 
-    // ... Injeções existentes (messagePackUtil, producer, etc.) ...
-
-    // Adicionar um ObjectMapper para a detecção de versão e deserialização da V2
-    private final ObjectMapper objectMapper = new ObjectMapper()
-            .registerModule(new JavaTimeModule())
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
+    // ...
 
     @KafkaListener( /* ... */ )
     public void consumer(List<String> messages, Acknowledgment acknowledgment) {
-        long startProcessFlowableBatch = System.nanoTime();
-        String hashThread = UUID.randomUUID().toString();
-        try {
-            MDC.put("transactionId", hashThread);
-            log.info("[{}] Recebido lote de {} mensagens", hashThread, messages.size());
+        // ...
+        // A parte de conversão que fizemos no passo anterior continua igual...
+        List<MovementContext> contexts = messages.parallelStream()
+                .map(this::parseMessageToContext)
+                .filter(Objects::nonNull)
+                .toList();
+        
+        // Esta linha agora vai chamar o método adaptado
+        List<MovementContext> contextsFiltered = filterMovementsToBeExecute(contexts);
+        
+        // E o resto do fluxo continua, passando a lista filtrada para o 'execute'
+        contextsFiltered.forEach(ctx -> {
+            futures.add(this.taskExecutor.submit(() -> this.execute(ctx)));
+        });
 
-            // ======================= CÓDIGO MODIFICADO =======================
-
-            // A linha de conversão original é substituída por esta:
-            List<MovementContext> contexts = messages.parallelStream()
-                    .map(this::parseMessageToContext) // Mapeia cada JSON para um MovementContext
-                    .filter(Objects::nonNull)          // Remove mensagens que falharam na conversão
-                    .toList();
-            
-            log.info("[{}] Mensagens convertidas para contexto. V1: {}, V2: {}.",
-                    hashThread,
-                    contexts.stream().filter(c -> "V1".equals(c.getVersion())).count(),
-                    contexts.stream().filter(c -> "V2".equals(c.getVersion())).count()
-            );
-
-            // =================================================================
-
-            // O resto do código virá aqui...
-            // List<MovementContext> contextsFiltered = filterMovementsToBeExecute(contexts);
-            // ...
-
-        } catch (Exception error) {
-            // ...
-        } finally {
-            // ...
-        }
+        // ...
     }
+
+    // ... parseMessageToContext(...) continua igual ...
 
     /**
-     * Novo método privado que detecta a versão, desserializa para o objeto correto
-     * e o encapsula em um MovementContext.
-     *
-     * @param rawJson A mensagem em string recebida do Kafka.
-     * @return Um MovementContext preenchido ou null se a conversão falhar.
+     * Método adaptado para trabalhar com List<MovementContext>
+     * @param contexts A lista de contextos convertidos.
+     * @return Uma nova lista contendo apenas os contextos que não são duplicados.
      */
-    private MovementContext parseMessageToContext(String rawJson) {
-        try {
-            JsonNode rootNode = objectMapper.readTree(rawJson);
-
-            if (rootNode.has("AccountMovementV1")) {
-                // Se é V1, usa o messagePackUtil existente
-                MessageInput<Movement> msgV1 = this.messagePackUtil.convertMessage(rawJson, Movement.class);
-                return MovementContext.ofV1(msgV1);
-
-            } else if (rootNode.has("AccountMovementV2")) {
-                // Se é V2, usa o objectMapper para os novos models
-                MessageInputV2 msgV2 = objectMapper.readValue(rawJson, MessageInputV2.class);
-                return MovementContext.ofV2(msgV2);
-
-            } else {
-                log.warn("Versão da mensagem não identificada. Conteúdo: {}", rawJson);
-                return null;
+    private List<MovementContext> filterMovementsToBeExecute(List<MovementContext> contexts) {
+        final int batchSize = 100; // O tamanho do seu batch para o Redis
+        List<MovementContext> result = new ArrayList<>();
+        
+        for (int i = 0; i < contexts.size(); i += batchSize) {
+            int end = Math.min(i + batchSize, contexts.size());
+            List<MovementContext> batch = contexts.subList(i, end);
+            
+            // A chamada para o serviço de dededuplicação agora passa o batch de contextos
+            List<Boolean> pipelineResults = movementDeduplicationService.addNewIds(batch);
+            
+            for (int j = 0; j < pipelineResults.size(); j++) {
+                if (Boolean.TRUE.equals(pipelineResults.get(j))) {
+                    result.add(batch.get(j)); // Adiciona apenas os não-duplicados
+                } else {
+                    log.info("Mensagem duplicada detectada e ignorada. Chave: {}", batch.get(j).getDeduplicationKey());
+                }
             }
-        } catch (Exception e) {
-            log.error("Falha ao converter mensagem para MovementContext. Conteúdo: {}", rawJson, e);
-            return null; // A falha será filtrada pelo .filter(Objects::nonNull)
         }
+        return result;
     }
 
-    // ... resto da classe (execute, filterMovementsToBeExecute, etc.)
+    // O método execute(MovementContext context) será o nosso próximo passo...
 }
