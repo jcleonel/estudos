@@ -1,6 +1,42 @@
-API responsável por receber e iniciar o processamento de solicitações de consulta de custódia de instrumentos financeiros. A chamada da API é síncrona, retornando imediatamente um identificador único para rastreamento da solicitação. O processamento da requisição e o envio das notificações são realizados de forma assíncrona nos sistemas internos, e após a conclusão, os dados da consulta são disponibilizados na plataforma E-Watcher para entrega ao cliente.
+@Data @NoArgsConstructor @AllArgsConstructor
+public class MessageInputV2<T> {
+    @JsonProperty("AccountMovementV2")
+    @NotNull @Valid
+    private AccountMovementV2<T> accountMovementV2;
+}
 
-Utilizado para submeter uma nova solicitação de consulta de custódia, enviando os dados da conta e dos ativos no corpo da requisição (body) para iniciar o processamento.
+@Data @NoArgsConstructor @AllArgsConstructor
+public class AccountMovementV2<T> {
+    @NotNull @Valid
+    private MessageControl messageControl;
 
+    @NotNull @Valid
+    private T data;
+}
 
-/api-external/custody-query/v1/request/solicitations
+@Data @NoArgsConstructor @AllArgsConstructor
+public class MovementV2 {
+    private String correlationId;
+    private String registerAccountCode;
+    private String tickerSymbolTypeCode;
+    private String tickerSymbol;
+    private Integer totalMovementQuantity;
+    private String accountMovementType;
+    private List<MovementTransactionV2> transactions;
+    private List<Balance> balances;
+}
+
+@Data @NoArgsConstructor @AllArgsConstructor
+public class MovementTransactionV2 {
+    private String movementAccountCode;
+    private String portfolioPositionTypeCode;
+    private String portfolioPositionTypeName; // Novo campo
+    private String movementTypeCode;
+    private List<Investor> investors;
+}
+
+@Data @NoArgsConstructor @AllArgsConstructor
+public class Balance {
+    private String balanceType;
+    private String movementTypeCode;
+}
