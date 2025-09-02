@@ -39,57 +39,31 @@ public class MovementRequestResponseMapper {
     public static MessageInput<MovementMessageOutput> buildMessageOutputComplete(
             String topic, MessageInput<Movement> movementMessage, Integer updatedTotalOfItems, String message,
             String status, List<ApplicationError> errors) {
-
-        return buildGenericMessageOutput(
-                topic,
-                movementMessage.getAccountMovementV1().getData(),
-                movementMessage.getAccountMovementV1().getMessageControl(),
-                updatedTotalOfItems,
-                message,
-                status,
-                errors,
-                (newControl, outputData) -> new MessageInput<>(new AccountMovementV1<>(newControl, outputData))
-        );
+        return buildGenericMessageOutput(topic, movementMessage.getAccountMovementV1().getData(),
+                movementMessage.getAccountMovementV1().getMessageControl(), updatedTotalOfItems, message, status, errors,
+                (newControl, outputData) -> new MessageInput<>(new AccountMovementV1<>(newControl, outputData)));
     }
 
     public static MessageInputV2<MovementMessageOutput> buildMessageOutputCompleteV2(
             String topic, MessageInputV2<Movement> movementMessage, Integer updatedTotalOfItems, String message,
             String status, List<ApplicationError> errors) {
-
-        return buildGenericMessageOutput(
-                topic,
-                movementMessage.getAccountMovementV2().getData(),
-                movementMessage.getAccountMovementV2().getMessageControl(),
-                updatedTotalOfItems,
-                message,
-                status,
-                errors,
-                (newControl, outputData) -> new MessageInputV2<>(new AccountMovementV2<>(newControl, outputData))
-        );
+        return buildGenericMessageOutput(topic, movementMessage.getAccountMovementV2().getData(),
+                movementMessage.getAccountMovementV2().getMessageControl(), updatedTotalOfItems, message, status, errors,
+                (newControl, outputData) -> new MessageInputV2<>(new AccountMovementV2<>(newControl, outputData)));
     }
 
     // --- Métodos PDD ---
 
     public static PddMessageInput toMessageInputPdd(
             String topic, MessageInput<Movement> movementMessage, PddDataInput pddDataInput, List<ApplicationError> errors) {
-        return buildGenericPddMessage(
-                topic,
-                movementMessage.getAccountMovementV1().getData(),
-                movementMessage.getAccountMovementV1().getMessageControl(),
-                errors,
-                pddDataInput
-        );
+        return buildGenericPddMessage(topic, movementMessage.getAccountMovementV1().getData(),
+                movementMessage.getAccountMovementV1().getMessageControl(), errors, pddDataInput);
     }
 
     public static PddMessageInput toMessageInputPddV2(
             String topic, MessageInputV2<Movement> movementMessage, PddDataInput pddDataInput, List<ApplicationError> errors) {
-        return buildGenericPddMessage(
-                topic,
-                movementMessage.getAccountMovementV2().getData(),
-                movementMessage.getAccountMovementV2().getMessageControl(),
-                errors,
-                pddDataInput
-        );
+        return buildGenericPddMessage(topic, movementMessage.getAccountMovementV2().getData(),
+                movementMessage.getAccountMovementV2().getMessageControl(), errors, pddDataInput);
     }
 
     // --- Métodos de Tratamento de Exceções ---
@@ -113,13 +87,26 @@ public class MovementRequestResponseMapper {
             String errorTopic, ApplicationError exceptionMessage, MessageInputV2<Movement> convertedMessage) {
         return buildErrorV2(errorTopic, ApplicationErrorListEnum.PROCESSING_ERROR_MESSAGE.getError(), convertedMessage, exceptionMessage);
     }
-    
+
     public static MessageInput<MovementMessageOutput> toException(String errorTopic, MessageInput<Movement> convertedMessage) {
-        return buildError(errorTopic, ApplicationErrorListEnum.PROCESSING_ERROR_MESSAGE.getError(), convertedMessage, createInitializerError());
+        return buildError(errorTopic, ApplicationErrorListEnum.PROCESSING_ERROR_MESSAGE.getError(), convertedMessage, createProcessingError());
     }
 
     public static MessageInputV2<MovementMessageOutput> toExceptionV2(String errorTopic, MessageInputV2<Movement> convertedMessage) {
-        return buildErrorV2(errorTopic, ApplicationErrorListEnum.PROCESSING_ERROR_MESSAGE.getError(), convertedMessage, createInitializerError());
+        return buildErrorV2(errorTopic, ApplicationErrorListEnum.PROCESSING_ERROR_MESSAGE.getError(), convertedMessage, createProcessingError());
+    }
+
+    // AQUI ESTÃO OS MÉTODOS REINSERIDOS
+    public static MessageInput<MovementMessageOutput> toExceptionInInitializerError(
+            String errorTopic, MessageInput<Movement> convertedMessage) {
+        return buildError(errorTopic, ApplicationErrorListEnum.INTERNAL_SERVER_ERROR.toString(),
+                convertedMessage, createInternalServerError());
+    }
+
+    public static MessageInputV2<MovementMessageOutput> toExceptionInInitializerErrorV2(
+            String errorTopic, MessageInputV2<Movement> convertedMessage) {
+        return buildErrorV2(errorTopic, ApplicationErrorListEnum.INTERNAL_SERVER_ERROR.toString(),
+                convertedMessage, createInternalServerError());
     }
 
     // --- Métodos de Construção de Erro ---
@@ -136,62 +123,27 @@ public class MovementRequestResponseMapper {
 
     // --- MÉTODOS PRIVADOS E GENÉRICOS (O CORAÇÃO DA SOLUÇÃO) ---
 
-    /**
-     * Constrói a mensagem de output genérica (V1 ou V2), recebendo uma "fábrica" para montar o objeto final.
-     * @param messageFactory Uma função que recebe o novo MessageControl e MovementMessageOutput e retorna o objeto final (MessageInput<T> ou MessageInputV2<T>).
-     */
     private static <T> T buildGenericMessageOutput(
-            String topic,
-            Movement movement,
-            MessageControl originalControl,
-            Integer updatedTotalOfItems,
-            String message,
-            String status,
-            List<ApplicationError> errors,
+            String topic, Movement movement, MessageControl originalControl, Integer updatedTotalOfItems,
+            String message, String status, List<ApplicationError> errors,
             BiFunction<MessageControl, MovementMessageOutput, T> messageFactory) {
-
-        MessageControl newControl = new MessageControl(
-                topic, originalControl.getTo(), originalControl.getFrom(), false,
+        MessageControl newControl = new MessageControl(topic, originalControl.getTo(), originalControl.getFrom(), false,
                 "producerSystemModule", LocalDateTime.now().toString(),
-                originalControl.getTransactionId(), "1", "messageSchema", errors
-        );
-
-        MovementMessageOutput outputData = new MovementMessageOutput(
-                movement.getRegisterAccountCode(),
-                movement.getTickerSymbolTypeCode(),
-                movement.getTickerSymbol(),
-                movement.getTotalMovementQuantity(),
-                updatedTotalOfItems,
-                message,
-                status
-        );
-
+                originalControl.getTransactionId(), "1", "messageSchema", errors);
+        MovementMessageOutput outputData = new MovementMessageOutput(movement.getRegisterAccountCode(),
+                movement.getTickerSymbolTypeCode(), movement.getTickerSymbol(), movement.getTotalMovementQuantity(),
+                updatedTotalOfItems, message, status);
         return messageFactory.apply(newControl, outputData);
     }
 
-    /**
-     * Constrói a mensagem PDD, que possui uma estrutura de saída comum para ambas as versões de entrada.
-     */
     private static PddMessageInput buildGenericPddMessage(
-            String topic,
-            Movement movement,
-            MessageControl originalControl,
-            List<ApplicationError> errors,
-            PddDataInput pddDataInput) {
-
-        MessageControl newControl = new MessageControl(
-                topic, originalControl.getTo(), originalControl.getFrom(), false,
+            String topic, Movement movement, MessageControl originalControl,
+            List<ApplicationError> errors, PddDataInput pddDataInput) {
+        MessageControl newControl = new MessageControl(topic, originalControl.getTo(), originalControl.getFrom(), false,
                 "producerSystemModule", LocalDateTime.now().toString(),
-                originalControl.getTransactionId(), "1", "messageSchema", errors
-        );
-
-        PddDataInput newPddDataInput = new PddDataInput(
-                movement.getTickerSymbol(),
-                movement.getRegisterAccountCode(),
-                movement.getTickerSymbolTypeCode(),
-                pddDataInput.getTransactions()
-        );
-
+                originalControl.getTransactionId(), "1", "messageSchema", errors);
+        PddDataInput newPddDataInput = new PddDataInput(movement.getTickerSymbol(), movement.getRegisterAccountCode(),
+                movement.getTickerSymbolTypeCode(), pddDataInput.getTransactions());
         return new PddMessageInput(new AccountBalanceV1(newControl, newPddDataInput));
     }
 
@@ -205,8 +157,14 @@ public class MovementRequestResponseMapper {
         return new ApplicationError("VALIDATION_ERROR", List.of(description));
     }
 
-    private static ApplicationError createInitializerError() {
+    private static ApplicationError createProcessingError() {
         return new ApplicationError("INITIALIZER_ERROR",
                 List.of(new ApplicationErrorDescription(ApplicationErrorListEnum.PROCESSING_ERROR_MESSAGE)));
+    }
+    
+    // MÉTODO HELPER ADICIONADO PARA O ERRO FALTANTE
+    private static ApplicationError createInternalServerError() {
+        return new ApplicationError("INITIALIZER_ERROR",
+                List.of(new ApplicationErrorDescription(ApplicationErrorListEnum.INTERNAL_SERVER_ERROR)));
     }
 }
