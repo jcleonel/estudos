@@ -1992,3 +1992,30 @@ Claude must stop after:
 - concise result summary.
 
 Wait for an explicit instruction before starting another wave.
+
+
+------------------------------------------------------------------------------------
+
+Execute **Wave 1 — Module Foundation and Persistence** from `docs/batch/EXECUTION.md`.
+
+Follow `CLAUDE.md` strictly.
+
+Use `docs/batch/SPEC.md` as the source of truth, but read only the sections explicitly referenced by Wave 1 unless an implementation dependency makes another section necessary.
+
+Follow the scope, acceptance criteria, verification requirements, context guardrails, and handoff rules defined in `EXECUTION.md`.
+
+Important constraints:
+
+- Do not create a new implementation plan.
+- Do not decompose the wave into a large task tree.
+- Do not create additional Markdown documentation.
+- Do not use subagents or agent teams.
+- Do not broadly explore the repository.
+- Inspect only repository areas required for this wave.
+- Reuse existing project conventions and infrastructure.
+- Do not implement future waves.
+- Do not commit or push.
+- Implement the complete wave, run the relevant tests, and fix failures caused by your changes.
+- Update `EXECUTION.md` only as instructed by its handoff section.
+
+Stop after Wave 1 is complete or if a genuine unresolved requirement blocks correct implementation.
